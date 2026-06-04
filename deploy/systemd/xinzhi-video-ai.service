@@ -1,0 +1,17 @@
+[Unit]
+Description=Xinzhi Video AI Streamlit Web UI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dev_jie
+WorkingDirectory=/home/dev_jie/xinzhi-video-ai
+Environment=PATH=/home/dev_jie/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=HOME=/home/dev_jie
+ExecStart=/home/dev_jie/.local/bin/uv run python -m streamlit run web/app.py --server.headless true --server.address 0.0.0.0 --server.port 8501 --browser.gatherUsageStats false
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
