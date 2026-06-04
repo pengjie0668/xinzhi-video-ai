@@ -17,7 +17,11 @@ Supports both image and video generation workflows.
 Automatically detects output type based on ExecuteResult.
 """
 
+import os
 from typing import Optional
+from urllib.parse import urlparse
+
+import requests
 
 from comfykit import ComfyKit
 from loguru import logger
@@ -243,6 +247,7 @@ class MediaService(ComfyBaseService):
             workflow_params["negative_prompt"] = negative_prompt
         if image_path is not None:
             workflow_params["image_path"] = image_path
+            workflow_params["image"] = image_path
         if steps is not None:
             workflow_params["steps"] = steps
         if seed is not None:
@@ -288,6 +293,7 @@ class MediaService(ComfyBaseService):
                     raise Exception("No video generated")
                 
                 video_url = result.videos[0]
+                video_path = self._save_remote_media(video_url, output_path) if output_path else video_url
                 logger.info(f"✅ Generated video: {video_url}")
                 
                 # Try to extract duration from result (if available)
@@ -297,7 +303,7 @@ class MediaService(ComfyBaseService):
                 
                 return MediaResult(
                     media_type="video",
-                    url=video_url,
+                    url=video_path,
                     duration=duration
                 )
             else:  # image
@@ -307,13 +313,35 @@ class MediaService(ComfyBaseService):
                     raise Exception("No image generated")
                 
                 image_url = result.images[0]
+                image_path_result = self._save_remote_media(image_url, output_path) if output_path else image_url
                 logger.info(f"✅ Generated image: {image_url}")
                 
                 return MediaResult(
                     media_type="image",
-                    url=image_url
+                    url=image_path_result
                 )
         
         except Exception as e:
             logger.error(f"Media generation error: {e}")
             raise
+
+    def _save_remote_media(self, media_url: str, output_path: Optional[str]) -> str:
+        """Download remote Comfy/RunningHub media when a local output path is requested."""
+        if not output_path:
+            return media_url
+
+        parsed = urlparse(str(media_url))
+        if parsed.scheme not in {"http", "https"}:
+            return media_url
+
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+
+        response = requests.get(media_url, timeout=300)
+        response.raise_for_status()
+        with open(output_path, "wb") as file:
+            file.write(response.content)
+
+        logger.info(f"Saved generated media to: {output_path}")
+        return output_path

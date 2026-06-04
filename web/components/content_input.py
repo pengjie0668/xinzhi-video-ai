@@ -264,18 +264,8 @@ def render_bgm_section(key_prefix=""):
 
 
 def render_version_info():
-    """Render version info and GitHub link"""
+    """Render version info."""
     with st.container(border=True):
         st.markdown(f"**{tr('version.title')}**")
         version = get_project_version()
-        github_url = "https://github.com/pengjie0668/xinzhi-video-ai"
-        
-        # Version and GitHub link in one line
-        badge_url = "https://img.shields.io/github/stars/pengjie0668/xinzhi-video-ai"
-
-        st.markdown(
-            f'{tr("version.current")}: `{version}` &nbsp;&nbsp; '
-            f'<a href="{github_url}" target="_blank">'
-            f'<img src="{badge_url}" alt="GitHub stars" style="vertical-align: middle;">'
-            f'</a>',
-            unsafe_allow_html=True)
+        st.markdown(f'{tr("version.current")}: `{version}`')

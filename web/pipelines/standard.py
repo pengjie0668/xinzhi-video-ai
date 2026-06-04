@@ -58,7 +58,7 @@ class StandardPipelineUI(PipelineUI):
             # BGM selection (bgm_path, bgm_volume)
             bgm_params = render_bgm_section()
             
-            # Version info & GitHub link
+            # Version info
             render_version_info()
         
         # ====================================================================

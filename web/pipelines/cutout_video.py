@@ -61,20 +61,26 @@ def _list_cutout_video_workflows(xinzhi_video_ai: Any) -> list[dict]:
                 continue
             if source not in {"runninghub", "selfhost"}:
                 continue
-            if not name.startswith("video_"):
+            if not name.startswith(("i2v_", "video_")):
                 continue
             if any(marker in name.lower() for marker in ("understanding", "analysis", "analyse")):
                 continue
 
-            workflows.append({**workflow, "service": source})
+            workflow_kind = "i2v" if name.startswith("i2v_") else "video"
+            workflows.append({**workflow, "service": source, "workflow_kind": workflow_kind})
             seen.add(key)
     except Exception as exc:
         logger.warning(f"Failed to list Comfy video workflows: {exc}")
 
     service_order = {"runninghub": 0, "selfhost": 1, "api": 2}
+    kind_order = {"i2v": 0, "video": 1}
     return sorted(
         workflows,
-        key=lambda wf: (service_order.get(wf.get("service"), 9), wf.get("display_name") or wf.get("key", "")),
+        key=lambda wf: (
+            service_order.get(wf.get("service"), 9),
+            kind_order.get(wf.get("workflow_kind"), 9),
+            wf.get("display_name") or wf.get("key", ""),
+        ),
     )
 
 
@@ -373,7 +379,7 @@ class CutoutVideoPipelineUI(PipelineUI):
                         st.caption(
                             "会把抠图后的透明 PNG 作为 image_path 传入工作流；请选择支持首帧图生视频的工作流。"
                             if zh
-                            else "The transparent PNG is passed as image_path; choose a workflow that supports first-frame image-to-video."
+                            else "The transparent PNG is passed as image/image_path; choose an i2v workflow that supports first-frame image-to-video."
                         )
                         negative_prompt = st.text_area(
                             "负向提示词（可选）" if zh else "Negative prompt (optional)",
